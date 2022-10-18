@@ -47,21 +47,21 @@ class TextAvatarSettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function getFormId() {
+  public function getFormId(): string {
     return 'text_avatar_settings';
   }
 
   /**
    * {@inheritdoc}
    */
-  protected function getEditableConfigNames() {
+  protected function getEditableConfigNames(): array {
     return ['text_avatar.settings'];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state) {
+  public function buildForm(array $form, FormStateInterface $form_state): array {
     $path = 'public://' . $this->config('text_avatar.settings')->get('folder');
     $isWritable = $this->fileSystem->prepareDirectory($path, FileSystemInterface::MODIFY_PERMISSIONS);
 
@@ -120,7 +120,7 @@ class TextAvatarSettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function validateForm(array &$form, FormStateInterface $form_state) {
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
     if ($form_state->getValue('folder') === '') {
       $form_state->setErrorByName('folder', $this->t('The folder cannot be empty'));
     }
@@ -130,7 +130,7 @@ class TextAvatarSettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state) {
+  public function submitForm(array &$form, FormStateInterface $form_state): void {
     $this->config('text_avatar.settings')
       ->set('folder', $form_state->getValue('folder'))
       ->set('imagetype', $form_state->getValue('imagetype'))

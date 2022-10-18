@@ -10,12 +10,12 @@ use Drupal\Core\File\FileSystemInterface;
 /**
  * Implements hook_install().
  */
-function text_avatar_install() {
+function text_avatar_install(): void {
 
-  /** @var \Drupal\text_avatar\Form $$config */
+  /** @var \Drupal\Core\Config\ImmutableConfig $config */
   $config = \Drupal::config('text_avatar.settings');
 
-  /** @var \Drupal\Core\File\FileSystem $fileSystemService */
+  /** @var mixed $fileSystemService */
   $fileSystemService = \Drupal::service('file_system');
 
   $path = 'public://' . $config->get('folder');

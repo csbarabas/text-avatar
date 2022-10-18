@@ -7,6 +7,7 @@ use Drupal\Core\Extension\ExtensionPathResolver;
 use Drupal\Core\File\FileSystem;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\file\FileRepository;
+use Drupal\user\UserInterface;
 
 /**
  * Text avatar module Services.
@@ -21,9 +22,9 @@ class TextAvatarServices {
   protected $fileRepository;
 
   /**
-   * Configuration Factory definition.
+   * The text_avatar.settings config object.
    *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   * @var \Drupal\Core\Config\Config
    */
   protected $config;
 
@@ -33,6 +34,13 @@ class TextAvatarServices {
    * @var \Drupal\Core\File\FileSystem
    */
   protected $fileSystem;
+
+  /**
+   * ExtensionPAthResolver definition.
+   *
+   * @var \Drupal\Core\Extension\ExtensionPathResolver
+   */
+  protected $extensionPathResolver;
 
   /**
    * Construct a TextAvatarService.
@@ -55,8 +63,14 @@ class TextAvatarServices {
 
   /**
    * Create a custom avatar image from initials.
+   *
+   * @param string $text
+   *   The initials to use.
+   *
+   * @return string|int|null
+   *   Return the new picture file id.
    */
-  public function newAvatar($text) {
+  public function newAvatar(string $text) {
     $currentDirectory = $this->extensionPathResolver->getPath('module', 'text_avatar');
 
     $text = strtoupper($text);
@@ -141,9 +155,12 @@ class TextAvatarServices {
   }
 
   /**
-   * If user picture empty, generate an avatar image.
+   * If user picture empty, generate an avatar image and save to user_picture.
+   *
+   * @param \Drupal\user\UserInterface $entity
+   *   The user object.
    */
-  public function setUserPicture($entity) {
+  public function setUserPicture(UserInterface $entity): void {
 
     if (!isset($entity->user_picture->target_id)) {
       $i = substr($entity->name->value, 0, 1);

@@ -3,21 +3,14 @@
 /**
  * @file
  * Primary module hooks for Text Avatar module.
- *
- * @DCG
- * This file is no longer required in Drupal 8.
- * @see https://www.drupal.org/node/2217931
  */
 
-use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\File\FileSystemInterface;
+use Drupal\user\UserInterface;
 
 /**
  * Implements hook_ENTITY_TYPE_update().
- *
- * @var \Drupal\user\UserInterface $entity
  */
-function text_avatar_user_update(EntityInterface $entity) {
+function text_avatar_user_update(UserInterface $entity): void {
 
   /*
    * action:
@@ -28,18 +21,14 @@ function text_avatar_user_update(EntityInterface $entity) {
   $action = \Drupal::config('text_avatar.settings')->get('action');
 
   if (($action == 1) || ($action == 2)) {
-
-    /** @var \Drupal\text_avatar\TextAvatarService $textAvatarService */
     \Drupal::service('text_avatar.services')->setUserPicture($entity);
   }
 }
 
 /**
  * Implements hook_ENTITY_TYPE_insert().
- *
- * @var \Drupal\user\UserInterface $entity
  */
-function text_avatar_user_insert(EntityInterface $entity) {
+function text_avatar_user_insert(UserInterface $entity): void {
 
   /*
    * action:
@@ -50,7 +39,6 @@ function text_avatar_user_insert(EntityInterface $entity) {
   $action = \Drupal::config('text_avatar.settings')->get('action');
 
   if (($action == 0) || ($action == 2)) {
-    /** @var \Drupal\text_avatar\TextAvatarService $textAvatarService */
     \Drupal::service('text_avatar.services')->setUserPicture($entity);
   }
 
