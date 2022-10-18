@@ -69,7 +69,7 @@ class TextAvatarSettingsForm extends ConfigFormBase {
       $writable = $this->t('The folder name where save the avatar images');
     }
     else {
-      $writable = '<strong>' . $this->t('The folder is not writable!!!') . '</strong>';
+      $writable = '<strong>' . $this->t('The directory %directory is not writable.', ['%directory' => $path]) . '</strong>';
     }
 
     $form['folder'] = [

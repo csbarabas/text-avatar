@@ -5,5 +5,3 @@ text_avatar.settings_form:
     _form: 'Drupal\text_avatar\Form\TextAvatarSettingsForm'
   requirements:
     _permission: 'administer site configuration'
-  options:
-    _admin_route: TRUE

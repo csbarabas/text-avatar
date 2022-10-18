@@ -1,0 +1,40 @@
+<?php
+
+/**
+ * @file
+ * Install hook for Text Avatar module.
+ */
+
+use Drupal\Core\File\FileSystemInterface;
+
+/**
+ * Implements hook_install().
+ */
+function text_avatar_install() {
+
+  /** @var \Drupal\text_avatar\Form $$config */
+  $config = \Drupal::config('text_avatar.settings');
+
+  /** @var \Drupal\Core\File\FileSystem $fileSystemService */
+  $fileSystemService = \Drupal::service('file_system');
+
+  $path = 'public://' . $config->get('folder');
+
+  $isCreated = $fileSystemService->prepareDirectory($path, FileSystemInterface::CREATE_DIRECTORY);
+
+  if ($isCreated) {
+    \Drupal::logger('text_avatar')->notice('Created ' . $path . ' folder.');
+  }
+  else {
+    \Drupal::logger('text_avatar')->error('Fail to prepare directory:' . $path . ' (ERR_CODE:1)' . ' (' . __FILE__ . ':' . __LINE__ . ')');
+  }
+
+  $isWritable = $fileSystemService->prepareDirectory($path, FileSystemInterface::MODIFY_PERMISSIONS);
+
+  if ($isWritable) {
+    \Drupal::logger('text_avatar')->notice($path . ' is writable.');
+  }
+  else {
+    \Drupal::logger('text_avatar')->error('Fail to prepare directory:' . $path . ' (ERR_CODE:2)' . ' (' . __FILE__ . ':' . __LINE__ . ')');
+  }
+}

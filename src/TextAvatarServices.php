@@ -2,13 +2,14 @@
 
 namespace Drupal\text_avatar;
 
-use Drupal\Core\Config\ConfigFactory;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Extension\ExtensionPathResolver;
 use Drupal\Core\File\FileSystem;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\file\FileRepository;
 
 /**
- * Mytask module Services.
+ * Text avatar module Services.
  */
 class TextAvatarServices {
 
@@ -22,9 +23,9 @@ class TextAvatarServices {
   /**
    * Configuration Factory definition.
    *
-   * @var \Drupal\Core\Config\ConfigFactory
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
-  protected $configFactory;
+  protected $config;
 
   /**
    * FileSystem definition.
@@ -34,54 +35,58 @@ class TextAvatarServices {
   protected $fileSystem;
 
   /**
-   * Constructs a FileRepository object.
+   * Construct a TextAvatarService.
    *
    * @param \Drupal\file\FileRepository $file_repository
    *   The file.repository service.
-   * @param \Drupal\Core\Config\ConfigFactory $config_factory
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config.factory service.
    * @param \Drupal\Core\File\FileSystem $file_system
    *   The file_system service.
+   * @param \Drupal\Core\Extension\ExtensionPathResolver $extension_path_resolver
+   *   The extension.path.resolver service.
    */
-  public function __construct(FileRepository $file_repository, ConfigFactory $config_factory, FileSystem $file_system) {
+  public function __construct(FileRepository $file_repository, ConfigFactoryInterface $config_factory, FileSystem $file_system, ExtensionPathResolver $extension_path_resolver) {
     $this->fileRepository = $file_repository;
-    $this->configFactory = $config_factory->get('text_avatar.settings');
+    $this->config = $config_factory->get('text_avatar.settings');
     $this->fileSystem = $file_system;
+    $this->extensionPathResolver = $extension_path_resolver;
   }
 
   /**
    * Create a custom avatar image from initials.
    */
   public function newAvatar($text) {
+    $currentDirectory = $this->extensionPathResolver->getPath('module', 'text_avatar');
 
     $text = strtoupper($text);
 
-    $path = 'public://' . $this->configFactory->get('folder');
-    $imageType = $this->configFactory->get('imagetype');
-    $fontType = $this->configFactory->get('font');
+    $path = 'public://' . $this->config->get('folder');
+    $imageType = $this->config->get('imagetype');
+    $fontType = $this->config->get('font');
     switch ($fontType) {
       case 1:
-        $font = getcwd() . '/modules/custom/text_avatar/fonts/Lato-Regular.ttf';
+        $font = $currentDirectory . '/fonts/Lato-Regular.ttf';
         break;
 
       case 2:
-        $font = getcwd() . '/modules/custom/text_avatar/fonts/Lora-Regular.ttf';
+        $font = $currentDirectory . '/fonts/Lora-Regular.ttf';
         break;
 
       case 3:
-        $font = getcwd() . '/modules/custom/text_avatar/fonts/BebasNeue-Regular.ttf';
+        $font = $currentDirectory . '/fonts/BebasNeue-Regular.ttf';
         break;
 
       case 4:
-        $font = getcwd() . '/modules/custom/text_avatar/fonts/DancingScript-Regular.ttf';
+        $font = $currentDirectory . '/fonts/DancingScript-Regular.ttf';
         break;
 
       case 5:
-        $font = getcwd() . '/modules/custom/text_avatar/fonts/RobotoMono-Regular.ttf';
+        $font = $currentDirectory . '/fonts/RobotoMono-Regular.ttf';
         break;
 
       default:
-        $font = getcwd() . '/modules/custom/text_avatar/fonts/Lato-Regular.ttf';
+        $font = $currentDirectory . '/fonts/Lato-Regular.ttf';
     }
 
     $red = rand(0, 255);

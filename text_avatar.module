@@ -10,40 +10,11 @@
  */
 
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\file\Entity\File;
-
-/**
- * Implements hook_install().
- */
-function text_avatar_install() {
-
-  /** @var \Drupal\text_avatar\Form $$config */
-  $config = \Drupal::config('text_avatar.settings');
-
-  /** @var \Drupal\Core\File\FileSystem $fileSystemService */
-  $fileSystemService = \Drupal::service('file_system');
-
-  $path = 'public://' . $config->get('folder');
-
-  $isCreated = $fileSystemService->prepareDirectory($path, \Drupal\Core\File\FileSystemInterface::CREATE_DIRECTORY);
-
-  if ($isCreated) {
-    \Drupal::logger('text_avatar')->notice('Created ' . $path . ' folder.');
-  } else {
-    \Drupal::logger('text_avatar')->error('Fail to prepare directory:' . $path . ' (ERR_CODE:1)' . ' (' . __FILE__ . ':' . __LINE__ . ')');
-  }
-
-  $isWritable = $fileSystemService->prepareDirectory($path, \Drupal\Core\File\FileSystemInterface::MODIFY_PERMISSIONS);
-
-  if ($isWritable) {
-    \Drupal::logger('text_avatar')->notice($path . ' is writable.');
-  } else {
-    \Drupal::logger('text_avatar')->error('Fail to prepare directory:' . $path . ' (ERR_CODE:2)' . ' (' . __FILE__ . ':' . __LINE__ . ')');
-  }
-}
+use Drupal\Core\File\FileSystemInterface;
 
 /**
  * Implements hook_ENTITY_TYPE_update().
+ *
  * @var \Drupal\user\UserInterface $entity
  */
 function text_avatar_user_update(EntityInterface $entity) {
@@ -58,18 +29,6 @@ function text_avatar_user_update(EntityInterface $entity) {
 
   if (($action == 1) || ($action == 2)) {
 
-    // @todo change the avatar only when username has changed
-    /*
-    if ($entity->original->name->value != $entity->name->value) {
-      $fid = $entity->user_picture->target_id;
-      if ($fid) {
-        $img = File::load($fid);
-        $img->delete();
-      }
-      unset($entity->user_picture);
-    }
-    */
-
     /** @var \Drupal\text_avatar\TextAvatarService $textAvatarService */
     \Drupal::service('text_avatar.services')->setUserPicture($entity);
   }
@@ -77,6 +36,7 @@ function text_avatar_user_update(EntityInterface $entity) {
 
 /**
  * Implements hook_ENTITY_TYPE_insert().
+ *
  * @var \Drupal\user\UserInterface $entity
  */
 function text_avatar_user_insert(EntityInterface $entity) {
