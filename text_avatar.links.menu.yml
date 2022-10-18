@@ -1,0 +1,6 @@
+text_avatar.settings_form:
+  title: Text avatar settings
+  description: Generate text avatar images from user's name initial.
+  parent: system.admin_config_system
+  route_name: text_avatar.settings_form
+  weight: 10

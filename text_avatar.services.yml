@@ -1,0 +1,4 @@
+services:
+  text_avatar.services:
+    class: Drupal\text_avatar\TextAvatarServices
+    arguments: ['@file.repository', '@config.factory', '@file_system']

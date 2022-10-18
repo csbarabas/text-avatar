@@ -1,0 +1,9 @@
+text_avatar.settings_form:
+  path: '/admin/config/system/text-avatar-settings'
+  defaults:
+    _title: 'Text avatar settings'
+    _form: 'Drupal\text_avatar\Form\TextAvatarSettingsForm'
+  requirements:
+    _permission: 'administer site configuration'
+  options:
+    _admin_route: TRUE

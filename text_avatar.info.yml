@@ -1,0 +1,6 @@
+name: Text Avatar
+type: module
+description: Generate a letter avatar from user name initial.
+package: Avatar
+core_version_requirement: ">=9.4"
+configure: text_avatar.settings_form
