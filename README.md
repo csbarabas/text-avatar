@@ -13,7 +13,7 @@ Install the module
 ------------
 Get the code like any other module and enable it.
 - composer require drupal/text_avatar
-- drush en text_evatar
+- drush en text_avatar
 (https://www.drupal.org/docs/user_guide/en/extend-module-install.html)
 
 Other avatar modules:
