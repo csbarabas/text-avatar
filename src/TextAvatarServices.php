@@ -3,9 +3,11 @@
 namespace Drupal\text_avatar;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Extension\ExtensionPathResolver;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystem;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\StreamWrapper\PublicStream;
+use Drupal\file\FileInterface;
 use Drupal\file\FileRepository;
 use Drupal\user\UserInterface;
 
@@ -36,11 +38,18 @@ class TextAvatarServices {
   protected $fileSystem;
 
   /**
-   * ExtensionPAthResolver definition.
+   * EntityTypeManager definition.
    *
-   * @var \Drupal\Core\Extension\ExtensionPathResolver
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $extensionPathResolver;
+  protected $entityTypeManager;
+
+  /**
+   * StreamWrapperPublic definition.
+   *
+   * @var \Drupal\Core\StreamWrapper\PublicStream
+   */
+  protected $streamWrapperPublic;
 
   /**
    * Construct a TextAvatarService.
@@ -51,14 +60,17 @@ class TextAvatarServices {
    *   The config.factory service.
    * @param \Drupal\Core\File\FileSystem $file_system
    *   The file_system service.
-   * @param \Drupal\Core\Extension\ExtensionPathResolver $extension_path_resolver
-   *   The extension.path.resolver service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity_type.manager service.
+   * @param \Drupal\Core\StreamWrapper\PublicStream $stream_wrapper_public
+   *   The stream_wrapper.public service.
    */
-  public function __construct(FileRepository $file_repository, ConfigFactoryInterface $config_factory, FileSystem $file_system, ExtensionPathResolver $extension_path_resolver) {
+  public function __construct(FileRepository $file_repository, ConfigFactoryInterface $config_factory, FileSystem $file_system, EntityTypeManagerInterface $entity_type_manager, PublicStream $stream_wrapper_public) {
     $this->fileRepository = $file_repository;
     $this->config = $config_factory->get('text_avatar.settings');
     $this->fileSystem = $file_system;
-    $this->extensionPathResolver = $extension_path_resolver;
+    $this->entityTypeManager = $entity_type_manager;
+    $this->streamWrapperPublic = $stream_wrapper_public;
   }
 
   /**
@@ -71,87 +83,72 @@ class TextAvatarServices {
    *   Return the new picture file id.
    */
   public function newAvatar(string $text) {
-    $currentDirectory = $this->extensionPathResolver->getPath('module', 'text_avatar');
 
     $text = strtoupper($text);
 
     $path = 'public://' . $this->config->get('folder');
     $imageType = $this->config->get('imagetype');
-    $fontType = $this->config->get('font');
-    switch ($fontType) {
-      case 1:
-        $font = $currentDirectory . '/fonts/Lato-Regular.ttf';
-        break;
+    $fid = $this->config->get('ttf');
+    $fileStorage = $this->entityTypeManager->getStorage('file');
+    $file = $fileStorage->load($fid);
 
-      case 2:
-        $font = $currentDirectory . '/fonts/Lora-Regular.ttf';
-        break;
+    $basePath = $this->streamWrapperPublic->basePath();
 
-      case 3:
-        $font = $currentDirectory . '/fonts/BebasNeue-Regular.ttf';
-        break;
+    if ($file instanceof FileInterface) {
+      $font = '/' . $basePath . '/' . $this->config->get('folder') . '/' . $file->getFilename();
 
-      case 4:
-        $font = $currentDirectory . '/fonts/DancingScript-Regular.ttf';
-        break;
+      $red = rand(0, 255);
+      $green = rand(0, 255);
+      $blue = rand(0, 255);
 
-      case 5:
-        $font = $currentDirectory . '/fonts/RobotoMono-Regular.ttf';
-        break;
+      $im = imagecreate(310, 310);
 
-      default:
-        $font = $currentDirectory . '/fonts/Lato-Regular.ttf';
+      imagecolorallocate($im, $red, $green, $blue);
+      $text_color = imagecolorallocate($im, 255, 255, 255);
+
+      $size = 100;
+      $angle = 0;
+      $xi = imagesx($im);
+      $yi = imagesy($im);
+
+      $box = imagettfbbox($size, $angle, $font, $text);
+
+      $xr = abs(max($box[2], $box[4]));
+      $yr = abs(max($box[5], $box[7]));
+
+      $x = intval(($xi - $xr) / 2);
+      $y = intval(($yi + $yr) / 2);
+
+      imagettftext($im, $size, $angle, $x, $y, $text_color, $font, $text);
+
+      ob_start();
+      if ($imageType == 'png') {
+        $filetype = 'png';
+        imagepng($im);
+      }
+      else {
+        $filetype = 'jpeg';
+        imagejpeg($im);
+      }
+      $im_string = ob_get_contents();
+      ob_end_clean();
+
+      $isWritable = $this->fileSystem->prepareDirectory($path, FileSystemInterface::MODIFY_PERMISSIONS);
+      if ($isWritable) {
+        $filesaved = $this->fileRepository->writeData($im_string, $path . '/avatar_' . $text . '.' . $filetype, 0);
+      }
+      else {
+        $filesaved = $this->fileRepository->writeData($im_string, 'public://avatar_' . $text . '.' . $filetype, 0);
+      }
+
+      $fid = $filesaved->id();
+
+      imagedestroy($im);
+
+      return $fid;
     }
 
-    $red = rand(0, 255);
-    $green = rand(0, 255);
-    $blue = rand(0, 255);
-
-    $im = imagecreate(310, 310);
-
-    imagecolorallocate($im, $red, $green, $blue);
-    $text_color = imagecolorallocate($im, 255, 255, 255);
-
-    $size = 100;
-    $angle = 0;
-    $xi = imagesx($im);
-    $yi = imagesy($im);
-
-    $box = imagettfbbox($size, $angle, $font, $text);
-
-    $xr = abs(max($box[2], $box[4]));
-    $yr = abs(max($box[5], $box[7]));
-
-    $x = intval(($xi - $xr) / 2);
-    $y = intval(($yi + $yr) / 2);
-
-    imagettftext($im, $size, $angle, $x, $y, $text_color, $font, $text);
-
-    ob_start();
-    if ($imageType == '1') {
-      $filetype = 'png';
-      imagepng($im);
-    }
-    else {
-      $filetype = 'jpeg';
-      imagejpeg($im);
-    }
-    $im_string = ob_get_contents();
-    ob_end_clean();
-
-    $isWritable = $this->fileSystem->prepareDirectory($path, FileSystemInterface::MODIFY_PERMISSIONS);
-    if ($isWritable) {
-      $filesaved = $this->fileRepository->writeData($im_string, $path . '/avatar_' . $text . '.' . $filetype, 0);
-    }
-    else {
-      $filesaved = $this->fileRepository->writeData($im_string, 'public://avatar_' . $text . '.' . $filetype, 0);
-    }
-
-    $fid = $filesaved->id();
-
-    imagedestroy($im);
-
-    return $fid;
+    return FALSE;
   }
 
   /**
@@ -167,8 +164,10 @@ class TextAvatarServices {
 
       $fid = $this->newAvatar($i);
 
-      $entity->set('user_picture', $fid);
-      $entity->save();
+      if ($fid != FALSE) {
+        $entity->set('user_picture', $fid);
+        $entity->save();
+      }
     }
   }
 

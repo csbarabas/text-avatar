@@ -3,16 +3,25 @@
 namespace Drupal\text_avatar\Form;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystem;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\file\FileInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Configure Text Avatar settings for this site.
  */
 class TextAvatarSettingsForm extends ConfigFormBase {
+
+  /**
+   * EntityTypeManager definition.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
 
   /**
    * FileSystem definition.
@@ -28,10 +37,13 @@ class TextAvatarSettingsForm extends ConfigFormBase {
    *   The factory for configuration objects.
    * @param \Drupal\Core\File\FileSystem $file_system
    *   The file_system service.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity_type.manager service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, FileSystem $file_system) {
+  public function __construct(ConfigFactoryInterface $config_factory, FileSystem $file_system, EntityTypeManagerInterface $entity_type_manager) {
     parent::__construct($config_factory);
     $this->fileSystem = $file_system;
+    $this->entityTypeManager = $entity_type_manager;
   }
 
   /**
@@ -41,6 +53,7 @@ class TextAvatarSettingsForm extends ConfigFormBase {
     return new static(
       $container->get('config.factory'),
       $container->get('file_system'),
+      $container->get('entity_type.manager'),
     );
   }
 
@@ -84,32 +97,32 @@ class TextAvatarSettingsForm extends ConfigFormBase {
       '#type' => 'select',
       '#title' => $this->t('Image type'),
       '#options' => [
-        '1' => 'png',
-        '2' => 'jpeg',
+        'png' => 'png',
+        'jpeg' => 'jpeg',
       ],
       '#default_value' => $this->config('text_avatar.settings')->get('imagetype'),
     ];
 
-    $form['font'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Font type'),
-      '#options' => [
-        '1' => 'Sans Serif',
-        '2' => 'Serif',
-        '3' => 'Display',
-        '4' => 'Handwriting',
-        '5' => 'Monospace',
+    $form['ttf'] = [
+      '#type' => 'managed_file',
+      '#title' => $this->t('Default font'),
+      '#description' => $this->t('The default font (*.ttf) to use for create a letter avatar image.'),
+      '#upload_location' => 'public://' . $this->config('text_avatar.settings')->get('folder'),
+      '#default_value' => [$this->config('text_avatar.settings')->get('ttf')] ?? [],
+      '#upload_validators' => [
+        'file_validate_extensions' => ['ttf'],
       ],
-      '#default_value' => $this->config('text_avatar.settings')->get('font'),
+      '#multiple' => FALSE,
+      '#required' => TRUE,
     ];
 
     $form['action'] = [
       '#type' => 'radios',
       '#title' => $this->t('Generate avatar when'),
       '#options' => [
-        '0' => $this->t('Create a new user'),
-        '1' => $this->t('Edit a user'),
-        '2' => $this->t('Both'),
+        'new_user' => $this->t('Create a new user'),
+        'edit_user' => $this->t('Edit a user'),
+        'both' => $this->t('Both'),
       ],
       '#default_value' => $this->config('text_avatar.settings')->get('action'),
     ];
@@ -131,11 +144,19 @@ class TextAvatarSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
+    $fid = reset($form_state->getValue('ttf'));
+    $fileStorage = $this->entityTypeManager->getStorage('file');
+    $file = $fileStorage->load($fid);
+    if ($file instanceof FileInterface) {
+      $file->setPermanent();
+      $file->save();
+    }
+
     $this->config('text_avatar.settings')
       ->set('folder', $form_state->getValue('folder'))
       ->set('imagetype', $form_state->getValue('imagetype'))
       ->set('action', $form_state->getValue('action'))
-      ->set('font', $form_state->getValue('font'))
+      ->set('ttf', $fid)
       ->save();
     parent::submitForm($form, $form_state);
   }

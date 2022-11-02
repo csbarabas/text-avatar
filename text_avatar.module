@@ -12,15 +12,9 @@ use Drupal\user\UserInterface;
  */
 function text_avatar_user_update(UserInterface $entity): void {
 
-  /*
-   * action:
-   *   0: When create a new user
-   *   1: Edit a user
-   *   2: Both
-   */
   $action = \Drupal::config('text_avatar.settings')->get('action');
 
-  if (($action == 1) || ($action == 2)) {
+  if (($action == 'edit_user') || ($action == 'both')) {
     \Drupal::service('text_avatar.services')->setUserPicture($entity);
   }
 }
@@ -30,15 +24,9 @@ function text_avatar_user_update(UserInterface $entity): void {
  */
 function text_avatar_user_insert(UserInterface $entity): void {
 
-  /*
-   * action:
-   *   0: When create a new user
-   *   1: Edit a user
-   *   2: Both
-   */
   $action = \Drupal::config('text_avatar.settings')->get('action');
 
-  if (($action == 0) || ($action == 2)) {
+  if (($action == 'new_user') || ($action == 'both')) {
     \Drupal::service('text_avatar.services')->setUserPicture($entity);
   }
 

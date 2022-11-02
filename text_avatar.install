@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\file\Entity\File;
 
 /**
  * Implements hook_install().
@@ -37,4 +38,25 @@ function text_avatar_install(): void {
   else {
     \Drupal::logger('text_avatar')->error('Fail to prepare directory:' . $path . ' (ERR_CODE:2)' . ' (' . __FILE__ . ':' . __LINE__ . ')');
   }
+
+  /** @var mixed $fileRepositoryService */
+  $fileRepositoryService = \Drupal::service('file.repository');
+  $defaultFileName = 'Roboto-Regular.ttf';
+  $defaultTtfPath = 'https://github.com/google/fonts/raw/main/apache/roboto/static/' . $defaultFileName;
+
+  $ttf = file_get_contents($defaultTtfPath);
+
+  if ($ttf) {
+    $ttf = $fileRepositoryService->writeData($ttf, 'public://' . $config->get('folder') . '/' . $defaultFileName, FileSystemInterface::EXISTS_REPLACE);
+    $ttf = File::load($ttf->id());
+    $ttf->setPermanent();
+    $ttf->save();
+
+    \Drupal::getContainer()->get('config.factory')->getEditable('text_avatar.settings')->set('ttf', $ttf->id())->save();
+    \Drupal::logger('text_avatar')->notice('The default ttf font - ' . $defaultFileName . ' - has downloaded.');
+  }
+  else {
+    \Drupal::logger('text_avatar')->error('The default ttf font download error' . $defaultFileName);
+  }
+
 }

@@ -8,11 +8,11 @@ text_avatar.settings:
       type: text
       label: 'Folder'
     imagetype:
-      type: integer
+      type: text
       label: 'Image Type'
     action:
-      type: integer
+      type: text
       label: 'Generate avatar when'
-    font:
+    ttf:
       type: integer
-      label: 'Font type'
+      label: 'Default font'

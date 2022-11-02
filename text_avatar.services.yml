@@ -1,4 +1,4 @@
 services:
   text_avatar.services:
     class: Drupal\text_avatar\TextAvatarServices
-    arguments: ['@file.repository', '@config.factory', '@file_system', '@extension.path.resolver']
+    arguments: ['@file.repository', '@config.factory', '@file_system', '@entity_type.manager', '@stream_wrapper.public']
