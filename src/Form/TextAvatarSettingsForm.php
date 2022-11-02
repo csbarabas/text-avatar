@@ -144,7 +144,8 @@ class TextAvatarSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
-    $fid = reset($form_state->getValue('ttf'));
+    $fid = $form_state->getValue('ttf');
+    $fid = reset($fid);
     $fileStorage = $this->entityTypeManager->getStorage('file');
     $file = $fileStorage->load($fid);
     if ($file instanceof FileInterface) {

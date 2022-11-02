@@ -95,8 +95,8 @@ class TextAvatarServices {
     $basePath = $this->streamWrapperPublic->basePath();
 
     if ($file instanceof FileInterface) {
-      $font = '/' . $basePath . '/' . $this->config->get('folder') . '/' . $file->getFilename();
 
+      $font = '/' . $basePath . '/' . $this->config->get('folder') . '/' . $file->getFilename();
       $red = rand(0, 255);
       $green = rand(0, 255);
       $blue = rand(0, 255);
@@ -148,7 +148,7 @@ class TextAvatarServices {
       return $fid;
     }
 
-    return FALSE;
+    return 0;
   }
 
   /**
@@ -164,7 +164,7 @@ class TextAvatarServices {
 
       $fid = $this->newAvatar($i);
 
-      if ($fid != FALSE) {
+      if ($fid != 0) {
         $entity->set('user_picture', $fid);
         $entity->save();
       }
