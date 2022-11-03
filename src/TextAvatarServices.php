@@ -7,7 +7,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystem;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StreamWrapper\PublicStream;
-use Drupal\file\FileInterface;
 use Drupal\file\FileRepository;
 use Drupal\user\UserInterface;
 
@@ -15,6 +14,11 @@ use Drupal\user\UserInterface;
  * Text avatar module Services.
  */
 class TextAvatarServices {
+
+  /**
+   * The default ttf font file name.
+   */
+  const DEFAULT_TTF_FONT = 'default.ttf';
 
   /**
    * The file.repository service.
@@ -88,67 +92,59 @@ class TextAvatarServices {
 
     $path = 'public://' . $this->config->get('folder');
     $imageType = $this->config->get('imagetype');
-    $fid = $this->config->get('ttf');
-    $fileStorage = $this->entityTypeManager->getStorage('file');
-    $file = $fileStorage->load($fid);
-
     $basePath = $this->streamWrapperPublic->basePath();
 
-    if ($file instanceof FileInterface) {
+    $font = '/' . $basePath . '/' . $this->config->get('folder') . '/' . self::DEFAULT_TTF_FONT;
 
-      $font = '/' . $basePath . '/' . $this->config->get('folder') . '/' . $file->getFilename();
-      $red = rand(0, 255);
-      $green = rand(0, 255);
-      $blue = rand(0, 255);
+    $red = rand(0, 255);
+    $green = rand(0, 255);
+    $blue = rand(0, 255);
+    $im = imagecreate(310, 310);
 
-      $im = imagecreate(310, 310);
+    imagecolorallocate($im, $red, $green, $blue);
+    $text_color = imagecolorallocate($im, 255, 255, 255);
 
-      imagecolorallocate($im, $red, $green, $blue);
-      $text_color = imagecolorallocate($im, 255, 255, 255);
+    $size = 100;
+    $angle = 0;
+    $xi = imagesx($im);
+    $yi = imagesy($im);
 
-      $size = 100;
-      $angle = 0;
-      $xi = imagesx($im);
-      $yi = imagesy($im);
+    $box = imagettfbbox($size, $angle, $font, $text);
 
-      $box = imagettfbbox($size, $angle, $font, $text);
+    $xr = abs(max($box[2], $box[4]));
+    $yr = abs(max($box[5], $box[7]));
 
-      $xr = abs(max($box[2], $box[4]));
-      $yr = abs(max($box[5], $box[7]));
+    $x = intval(($xi - $xr) / 2);
+    $y = intval(($yi + $yr) / 2);
 
-      $x = intval(($xi - $xr) / 2);
-      $y = intval(($yi + $yr) / 2);
+    imagettftext($im, $size, $angle, $x, $y, $text_color, $font, $text);
 
-      imagettftext($im, $size, $angle, $x, $y, $text_color, $font, $text);
+    ob_start();
+    if ($imageType == 'png') {
+      $filetype = 'png';
+      imagepng($im);
+    }
+    else {
+      $filetype = 'jpeg';
+      imagejpeg($im);
+    }
+    $im_string = ob_get_contents();
+    ob_end_clean();
 
-      ob_start();
-      if ($imageType == 'png') {
-        $filetype = 'png';
-        imagepng($im);
-      }
-      else {
-        $filetype = 'jpeg';
-        imagejpeg($im);
-      }
-      $im_string = ob_get_contents();
-      ob_end_clean();
-
-      $isWritable = $this->fileSystem->prepareDirectory($path, FileSystemInterface::MODIFY_PERMISSIONS);
-      if ($isWritable) {
-        $filesaved = $this->fileRepository->writeData($im_string, $path . '/avatar_' . $text . '.' . $filetype, 0);
-      }
-      else {
-        $filesaved = $this->fileRepository->writeData($im_string, 'public://avatar_' . $text . '.' . $filetype, 0);
-      }
-
-      $fid = $filesaved->id();
-
-      imagedestroy($im);
-
-      return $fid;
+    $isWritable = $this->fileSystem->prepareDirectory($path, FileSystemInterface::MODIFY_PERMISSIONS);
+    if ($isWritable) {
+      $filesaved = $this->fileRepository->writeData($im_string, $path . '/avatar_' . $text . '.' . $filetype, 0);
+    }
+    else {
+      $filesaved = $this->fileRepository->writeData($im_string, 'public://avatar_' . $text . '.' . $filetype, 0);
     }
 
-    return 0;
+    $fid = $filesaved->id();
+
+    imagedestroy($im);
+
+    return $fid;
+
   }
 
   /**

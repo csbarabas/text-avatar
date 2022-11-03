@@ -13,6 +13,3 @@ text_avatar.settings:
     action:
       type: text
       label: 'Generate avatar when'
-    ttf:
-      type: integer
-      label: 'Default font'

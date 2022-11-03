@@ -9,12 +9,21 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\file\FileInterface;
+use Drupal\file\FileRepository;
+use Drupal\text_avatar\TextAvatarServices;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Configure Text Avatar settings for this site.
  */
 class TextAvatarSettingsForm extends ConfigFormBase {
+
+  /**
+   * The file.repository service.
+   *
+   * @var \Drupal\file\FileRepository
+   */
+  protected $fileRepository;
 
   /**
    * EntityTypeManager definition.
@@ -33,6 +42,8 @@ class TextAvatarSettingsForm extends ConfigFormBase {
   /**
    * Constructs a new SettingsForm object.
    *
+   * @param \Drupal\file\FileRepository $file_repository
+   *   The file.repository service.
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The factory for configuration objects.
    * @param \Drupal\Core\File\FileSystem $file_system
@@ -40,7 +51,8 @@ class TextAvatarSettingsForm extends ConfigFormBase {
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity_type.manager service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, FileSystem $file_system, EntityTypeManagerInterface $entity_type_manager) {
+  public function __construct(FileRepository $file_repository, ConfigFactoryInterface $config_factory, FileSystem $file_system, EntityTypeManagerInterface $entity_type_manager) {
+    $this->fileRepository = $file_repository;
     parent::__construct($config_factory);
     $this->fileSystem = $file_system;
     $this->entityTypeManager = $entity_type_manager;
@@ -51,6 +63,7 @@ class TextAvatarSettingsForm extends ConfigFormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
+      $container->get('file.repository'),
       $container->get('config.factory'),
       $container->get('file_system'),
       $container->get('entity_type.manager'),
@@ -105,15 +118,14 @@ class TextAvatarSettingsForm extends ConfigFormBase {
 
     $form['ttf'] = [
       '#type' => 'managed_file',
-      '#title' => $this->t('Default font'),
-      '#description' => $this->t('The default font (*.ttf) to use for create a letter avatar image.'),
+      '#title' => $this->t('New font'),
+      '#description' => $this->t('The new default font (*.ttf) to use for create a letter avatar image.'),
       '#upload_location' => 'public://' . $this->config('text_avatar.settings')->get('folder'),
-      '#default_value' => [$this->config('text_avatar.settings')->get('ttf')] ?? [],
       '#upload_validators' => [
         'file_validate_extensions' => ['ttf'],
       ],
       '#multiple' => FALSE,
-      '#required' => TRUE,
+      '#required' => FALSE,
     ];
 
     $form['action'] = [
@@ -148,16 +160,17 @@ class TextAvatarSettingsForm extends ConfigFormBase {
     $fid = reset($fid);
     $fileStorage = $this->entityTypeManager->getStorage('file');
     $file = $fileStorage->load($fid);
+
     if ($file instanceof FileInterface) {
-      $file->setPermanent();
-      $file->save();
+      $file = $file->getFileUri();
+      $ttf = file_get_contents($file);
+      $ttf = $this->fileRepository->writeData($ttf, 'public://' . $this->config('text_avatar.settings')->get('folder') . '/' . TextAvatarServices::DEFAULT_TTF_FONT, FileSystemInterface::EXISTS_REPLACE);
     }
 
     $this->config('text_avatar.settings')
       ->set('folder', $form_state->getValue('folder'))
       ->set('imagetype', $form_state->getValue('imagetype'))
       ->set('action', $form_state->getValue('action'))
-      ->set('ttf', $fid)
       ->save();
     parent::submitForm($form, $form_state);
   }

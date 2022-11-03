@@ -7,6 +7,7 @@
 
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\file\Entity\File;
+use Drupal\text_avatar\TextAvatarServices;
 
 /**
  * Implements hook_install().
@@ -27,7 +28,7 @@ function text_avatar_install(): void {
     \Drupal::logger('text_avatar')->notice('Created ' . $path . ' folder.');
   }
   else {
-    \Drupal::logger('text_avatar')->error('Fail to prepare directory:' . $path . ' (ERR_CODE:1)' . ' (' . __FILE__ . ':' . __LINE__ . ')');
+    \Drupal::logger('text_avatar')->error('Failed to create directory:' . $path . ' (' . __FILE__ . ':' . __LINE__ . ')');
   }
 
   $isWritable = $fileSystemService->prepareDirectory($path, FileSystemInterface::MODIFY_PERMISSIONS);
@@ -47,7 +48,7 @@ function text_avatar_install(): void {
   $ttf = file_get_contents($defaultTtfPath);
 
   if ($ttf) {
-    $ttf = $fileRepositoryService->writeData($ttf, 'public://' . $config->get('folder') . '/' . $defaultFileName, FileSystemInterface::EXISTS_REPLACE);
+    $ttf = $fileRepositoryService->writeData($ttf, 'public://' . $config->get('folder') . '/' . TextAvatarServices::DEFAULT_TTF_FONT, FileSystemInterface::EXISTS_REPLACE);
     $ttf = File::load($ttf->id());
     $ttf->setPermanent();
     $ttf->save();

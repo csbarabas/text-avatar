@@ -3,12 +3,12 @@ Text avatar
 
 Automatically generate an user_picture letter avatar png/jpg images from user's name initial.
 
-You can unpload custom ttf file and set the image type (png or jpg) and the event when generating the image (after create a new user or user edit)
+You can upload custom ttf file and set the image type (png or jpg) and the event when generating the image (after create a new user or user edit)
 
 During the module installation, automatically download a default ttf font from:
 https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Regular.ttf
 
-You can change this on module settings page: /admin/config/system/text-avatar-settings
+You can change this uploading your ttf file on module settings page: /admin/config/system/text-avatar-settings
 
 
 Dependencies
